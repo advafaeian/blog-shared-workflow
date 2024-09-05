@@ -51,7 +51,7 @@ jobs:
         run: |
           for file in converted_md/*.md; do
             filename=$(basename "$file")
-            python blog-shared-workflow/process_latex.py "$file"
+            python blog-shared-workflow/process_file.py "$file"
           done
 
       - name: Identify converted and processed .md files
