@@ -1,0 +1,135 @@
+name: Convert and Copy Notebooks
+
+on:
+  workflow_call:
+    secrets:
+      TARGET_REPO_TOKEN:
+        required: true
+
+jobs:
+  convert_and_copy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the source repo
+        id: checkout_source
+        uses: actions/checkout@v4
+
+      - name: Checkout the reusable workflow repo (workflowtest)
+        uses: actions/checkout@v4
+        with:
+          repository: advafaeian/blog-shared-workflow
+          path: sharedorkflow  # This will checkout the repo into a 'workflowtest' directory
+
+      - name: Set up Python environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Jupyter and nbconvert
+        run: |
+          python -m pip install --upgrade pip
+          pip install jupyter nbconvert
+
+      - name: Convert .ipynb to .md
+        run: |
+          mkdir -p converted_md
+          for notebook in *.ipynb; do
+            jupyter nbconvert "$notebook" --to markdown --NbConvertApp.output_files_dir='.' --output-dir=converted_md 
+            echo "Converted $notebook"
+          done
+
+      # - name: Debug - List contents of directories
+      #   run: |
+      #     echo "Contents of current directory:"
+      #     ls -R
+      #     echo "Contents of converted_md directory:"
+      #     ls -R converted_md
+       
+
+      - name: Process Markdown files
+        run: |
+          for file in converted_md/*.md; do
+            filename=$(basename "$file")
+            python blog-shared-workflow/process_latex.py "$file"
+          done
+
+      - name: Identify converted and processed .md files
+        id: identify_files
+        run: |
+          find converted_md -name "*.md" > new_files.txt
+          echo "Contents of new_files.txt:"
+          cat new_files.txt
+
+      - name: Clone the target repository
+        run: |
+          git clone https://${{ secrets.TARGET_REPO_TOKEN }}@github.com/advafaeian/advafaeian.github.io.git target_repo
+        env:
+          GIT_TERMINAL_PROMPT: 0
+
+      - name: Add YAML metadata to Markdown files, renaming to index.md, and copy to target repo
+        run: |
+          while IFS= read -r file; do
+            # Extract the basename and replace underscores with hyphens
+            basename=$(basename "$file" .md)
+            modified_basename=${basename//_/-}
+
+            # Find the folder containing the modified basename in the target repo
+            folder=$(find target_repo/content/posts -type d -name "*$modified_basename*" -print -quit)
+            echo "$folder" > dest_folder.txt
+            if [ -d "$folder" ]; then
+              yaml_file="$folder/metadata.yaml"
+              if [ -f "$yaml_file" ]; then
+                echo "Prepending $yaml_file to $file"
+                # Prepare final markdown file with metadata
+                final_file="converted_md/index.md"
+                echo "---" > "$final_file"
+                cat "$yaml_file" >> "$final_file"
+                echo "---" >> "$final_file"
+                cat "$file" >> "$final_file"
+                rm "$file"
+              else
+                echo "No metadata.yaml file found in $folder"
+              fi
+              cp -r converted_md/* "$folder/"
+            else
+              echo "No folder found for basename $basename"
+            fi
+          done < new_files.txt
+
+          
+      - name: Copy media files (mp4, jpg, png, gif) to target repo
+        run: |
+          for media in *.mp4 *.jpg *.png *.gif; do
+            if [ -f "$media" ]; then
+              basename=$(basename "$media")
+              # Find the folder containing the basename in the target repo
+              folder=$(cat dest_folder.txt)
+              if [ -d "$folder" ]; then
+                cp "$media" "$folder/"
+                echo "Copied $media to $folder/"
+              else
+                echo "No folder found for basename $basename, media file $media not copied"
+              fi
+            fi
+          done
+
+      - name: Commit and push changes
+        id: commit_push
+        run: |
+          source_repo_name=$(basename $(git rev-parse --show-toplevel))
+          
+          cd target_repo
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
+
+          # Capture the source repo name
+          
+          # Generate the commit message with only the source repo name
+          commit_message="Post from: $source_repo_name"
+          
+          git add .
+          git status
+          git commit -m "$commit_message" || echo "No changes to commit"
+          git push https://${{ secrets.TARGET_REPO_TOKEN }}@github.com/advafaeian/advafaeian.github.io.git main
+
