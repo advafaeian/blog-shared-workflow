@@ -75,7 +75,7 @@ jobs:
             modified_basename=${basename//_/-}
 
             # Find the folder containing the modified basename in the target repo
-            folder=$(find target_repo/content/posts -type d -name "*$modified_basename*" -print -quit)
+            folder=$(find target_repo/content/posts -type d -iname "*$modified_basename*" -print -quit)
             echo "$folder" > dest_folder.txt
             if [ -d "$folder" ]; then
               yaml_file="$folder/frontmatter.yaml"
