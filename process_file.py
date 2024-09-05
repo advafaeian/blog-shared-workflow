@@ -48,6 +48,26 @@ def wrap_latex_with_raw(text):
 
     return ''.join(result)
 
+def remove_initial_headings(text):
+    """
+    Remove the initial lines starting with '#' from the given text until a line not starting with '#' is found.
+
+    Args:
+    text (str): The input text from which the lines starting with '#' should be removed.
+
+    Returns:
+    str: The text after removing the initial '#' lines.
+    """
+    lines = text.splitlines()
+    index = 0
+    # Find the index of the first line that does not start with '#'
+    
+    while index < len(lines) and (lines[index].startswith('#') or lines[index].isspace() or lines[index] == ""):
+        index += 1
+    
+    # Join the remaining lines back into a single string
+    return '\n'.join(lines[index:])
+
 def process_file(input_file):
     # Generate the output file name with .md extension
     base_name = os.path.splitext(input_file)[0]
@@ -59,7 +79,7 @@ def process_file(input_file):
 
     # Process the content
     processed_content = wrap_latex_with_raw(content)
-
+    processed_content = remove_initial_headings(processed_content)
     # Write output file
     with open(output_file, 'w') as file:
         file.write(processed_content)
