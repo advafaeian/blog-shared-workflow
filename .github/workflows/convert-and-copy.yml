@@ -97,22 +97,7 @@ jobs:
             fi
           done < new_files.txt
 
-          
-      - name: Copy media files (mp4, jpg, png, gif) to target repo
-        run: |
-          for media in *.mp4 *.jpg *.png *.gif; do
-            if [ -f "$media" ]; then
-              basename=$(basename "$media")
-              # Find the folder containing the basename in the target repo
-              folder=$(cat dest_folder.txt)
-              if [ -d "$folder" ]; then
-                cp "$media" "$folder/"
-                echo "Copied $media to $folder/"
-              else
-                echo "No folder found for basename $basename, media file $media not copied"
-              fi
-            fi
-          done
+      
 
       - name: Commit and push changes
         id: commit_push
