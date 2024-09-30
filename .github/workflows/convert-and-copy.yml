@@ -83,9 +83,9 @@ jobs:
                 echo "Prepending $yaml_file to $file"
                 # Prepare final markdown file with front matter
                 final_file="converted_md/index.md"
-                echo "---" > "$final_file"
+                
                 cat "$yaml_file" >> "$final_file"
-                echo "---" >> "$final_file"
+                
                 cat "$file" >> "$final_file"
                 rm "$file"
               else
