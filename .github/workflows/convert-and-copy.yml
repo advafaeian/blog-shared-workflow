@@ -92,6 +92,15 @@ jobs:
                 echo "No frontmatter.yaml file found in $folder"
               fi
               cp -r converted_md/* "$folder/"
+             
+              # Copy the 'media' folder from the root of the repository to the target folder
+              if [ -d "media" ]; then
+                echo "Copying media folder from root to $folder"
+                cp -r media "$folder/"
+              else
+                echo "No media folder found in the root"
+              fi
+
             else
               echo "No folder found for basename $basename"
             fi
