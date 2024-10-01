@@ -35,7 +35,7 @@ jobs:
         run: |
           mkdir -p converted_md
           for notebook in *.ipynb; do
-            jupyter nbconvert "$notebook" --to markdown --NbConvertApp.output_files_dir='.' --output-dir=converted_md 
+            jupyter nbconvert "$notebook" --to markdown --NbConvertApp.output_files_dir='./converted_md' --output-dir=converted_md 
             echo "Converted $notebook"
           done
 
