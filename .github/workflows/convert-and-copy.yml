@@ -15,11 +15,11 @@ jobs:
         id: checkout_source
         uses: actions/checkout@v4
 
-      - name: Checkout the reusable workflow repo (workflowtest)
+      - name: Checkout the reusable workflow repo
         uses: actions/checkout@v4
         with:
           repository: advafaeian/blog-shared-workflow
-          path: sharedworkflow  # This will checkout the repo into a 'workflowtest' directory
+          path: sharedworkflow  
 
       - name: Set up Python environment
         uses: actions/setup-python@v5
@@ -35,7 +35,7 @@ jobs:
         run: |
           mkdir -p converted_md
           for notebook in *.ipynb; do
-            jupyter nbconvert "$notebook" --to markdown --NbConvertApp.output_files_dir='./converted_md' --output-dir=converted_md 
+            jupyter nbconvert "$notebook" --to markdown --NbConvertApp.output_files_dir='.' --output-dir=converted_md 
             echo "Converted $notebook"
           done
 
